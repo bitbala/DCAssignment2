@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+service FileServer {
+    rpc DownloadFile(DownloadFileRequest) returns (DownloadFileResponse) {}
+	rpc SaveFile(SaveFileRequest) returns (SaveFileResponse) {}
+}
+
+message DownloadFileRequest {
+    string file_name = 1;
+}
+
+message DownloadFileResponse {
+    bool success = 1;
+    string message = 2;
+    bytes file_content = 3;
+}
+
+message SaveFileRequest {
+    string file_name = 1;
+    bytes file_content = 2;
+}
+
+message SaveFileResponse {
+    bool success = 1;
+    string message = 2;
+}
