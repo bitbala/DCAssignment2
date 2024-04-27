@@ -83,6 +83,63 @@ class FileServer(FileServer_pb2_grpc.FileServerServicer):
                 return FileServer_pb2.SaveFileResponse(success=False, message="File writing error.")
         logging.info(json.dumps(self.file_hash_table, indent=4))
         return FileServer_pb2.SaveFileResponse(success=True, message=response_message)
+    
+
+    """
+    RPC method to download the files to the clients
+    """
+    def DownloadFile(self, request, context):
+        
+        # Check if the request is valid
+        if not request.file_name:
+            return FileServer_pb2.DownloadFileResponse(success=False, message="Invalid file name")
+     
+        logging.info(f"Download requested received....{request.file_name}")
+        file_content = None
+
+        try:
+
+            if request.file_name in self.file_hash_table:
+                # Constructing the folder and file_names in the local repository
+                file_server_directory = self.file_server_configs["files_dir"]
+                requested_file = os.path.join(file_server_directory, 
+                                              self.file_hash_table[request.file_name]['file_to_send'])
+                # Checking if the file exists in the current fileserver
+                # If not we can forward to the nearest server
+                if (os.path.exists(requested_file)):
+                    logging.info(f"File found {requested_file}")
+                    with open(requested_file, 'rb') as file:  # Open the file in binary mode ('rb')
+                        file_content = file.read(1024*1024*4)
+                        success = True
+                        message = "Success"
+                else:
+                    logging.info(f"File Not found in file server")
+                    success = False
+                    message = "File Not found"
+                    file_content = None
+            else:
+                logging.info(f"File Not found in file server")
+                success = False
+                message = "File Not found"
+                file_content = None
+        except PermissionError:
+            logging.error(f"Permission denied: Unable to read '{file_server_directory}'.")
+            success=False
+            message="Permission denied."
+            file_content = None
+
+        except IOError as e:
+            logging.error(f"Error writing file {requested_file}: {e}")
+            success=False
+            message="Unable to read file"
+            file_content = None
+        
+        except Exception as e:
+            success=False
+            message=str(e)
+            file_content = None
+        
+        return FileServer_pb2.DownloadFileResponse(success = success, message = message, file_content=file_content)
 
     def serve(self):
         #Get the port number to run the Fileserver that listens to incoming requests
