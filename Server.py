@@ -140,6 +140,30 @@ class FileServer(FileServer_pb2_grpc.FileServerServicer):
             file_content = None
         
         return FileServer_pb2.DownloadFileResponse(success = success, message = message, file_content=file_content)
+    
+    """
+    Method to initalize the configs
+    """
+    def initialize_configs(self):
+        logging.info(f"calling initialize_Configs:{self}")
+        self.file_server_config_file = os.path.join("config","file_server.conf")
+        self.file_server_configs = ConfigReader.fetch_all_configs(self.file_server_config_file)
+        self.file_hash_table = None
+        self.file_hash_table = HashUtils.generate_file_hash_table(self.file_server_configs["files_dir"])
+        logging.info(json.dumps(self.file_hash_table, indent=4))
+
+
+    """
+    RPC method to save the file that sent by the clients or other servers
+    """
+    def ListFiles(self, request, context):
+        # Fetching the local directory to save the incoming files
+        local_directory = self.file_server_configs["files_dir"]
+        fileName = None
+        
+        files_list = self.file_hash_table.keys()
+
+        return FileServer_pb2.ListFilesResponse(success=True, fileName=files_list)
 
     def serve(self):
         #Get the port number to run the Fileserver that listens to incoming requests

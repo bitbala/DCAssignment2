@@ -3,6 +3,7 @@ syntax = "proto3";
 service FileServer {
     rpc DownloadFile(DownloadFileRequest) returns (DownloadFileResponse) {}
 	rpc SaveFile(SaveFileRequest) returns (SaveFileResponse) {}
+    rpc ListFiles(ListFilesRequest) returns (ListFilesResponse) {}
 }
 
 message DownloadFileRequest {
@@ -23,4 +24,12 @@ message SaveFileRequest {
 message SaveFileResponse {
     bool success = 1;
     string message = 2;
+}
+
+message ListFilesRequest {
+}
+
+message ListFilesResponse {
+    bool success = 1;
+    repeated string fileName = 2;
 }
