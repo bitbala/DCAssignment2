@@ -14,7 +14,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x10\x46ileServer.proto\"(\n\x13\x44ownloadFileRequest\x12\x11\n\tfile_name\x18\x01 \x01(\t\"N\n\x14\x44ownloadFileResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\x12\x14\n\x0c\x66ile_content\x18\x03 \x01(\x0c\":\n\x0fSaveFileRequest\x12\x11\n\tfile_name\x18\x01 \x01(\t\x12\x14\n\x0c\x66ile_content\x18\x02 \x01(\x0c\"4\n\x10SaveFileResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\"\x12\n\x10ListFilesRequest\"6\n\x11ListFilesResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x10\n\x08\x66ileName\x18\x02 \x03(\t2\xb4\x01\n\nFileServer\x12=\n\x0c\x44ownloadFile\x12\x14.DownloadFileRequest\x1a\x15.DownloadFileResponse\"\x00\x12\x31\n\x08SaveFile\x12\x10.SaveFileRequest\x1a\x11.SaveFileResponse\"\x00\x12\x34\n\tListFiles\x12\x11.ListFilesRequest\x1a\x12.ListFilesResponse\"\x00\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x10\x46ileServer.proto\"(\n\x13\x44ownloadFileRequest\x12\x11\n\tfile_name\x18\x01 \x01(\t\"N\n\x14\x44ownloadFileResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\x12\x14\n\x0c\x66ile_content\x18\x03 \x01(\x0c\":\n\x0fSaveFileRequest\x12\x11\n\tfile_name\x18\x01 \x01(\t\x12\x14\n\x0c\x66ile_content\x18\x02 \x01(\x0c\"4\n\x10SaveFileResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\"\x12\n\x10ListFilesRequest\"6\n\x11ListFilesResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x10\n\x08\x66ileName\x18\x02 \x03(\t\"\r\n\x0bLockRequest\"\x1f\n\x0cLockResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\"\x14\n\x12ReleaseLockRequest\"&\n\x13ReleaseLockResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x32\x9a\x02\n\nFileServer\x12=\n\x0c\x44ownloadFile\x12\x14.DownloadFileRequest\x1a\x15.DownloadFileResponse\"\x00\x12\x31\n\x08SaveFile\x12\x10.SaveFileRequest\x1a\x11.SaveFileResponse\"\x00\x12\x34\n\tListFiles\x12\x11.ListFilesRequest\x1a\x12.ListFilesResponse\"\x00\x12(\n\x07GetLock\x12\x0c.LockRequest\x1a\r.LockResponse\"\x00\x12:\n\x0bReleaseLock\x12\x13.ReleaseLockRequest\x1a\x14.ReleaseLockResponse\"\x00\x62\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -33,6 +33,14 @@ if _descriptor._USE_C_DESCRIPTORS == False:
   _globals['_LISTFILESREQUEST']._serialized_end=274
   _globals['_LISTFILESRESPONSE']._serialized_start=276
   _globals['_LISTFILESRESPONSE']._serialized_end=330
-  _globals['_FILESERVER']._serialized_start=333
-  _globals['_FILESERVER']._serialized_end=513
+  _globals['_LOCKREQUEST']._serialized_start=332
+  _globals['_LOCKREQUEST']._serialized_end=345
+  _globals['_LOCKRESPONSE']._serialized_start=347
+  _globals['_LOCKRESPONSE']._serialized_end=378
+  _globals['_RELEASELOCKREQUEST']._serialized_start=380
+  _globals['_RELEASELOCKREQUEST']._serialized_end=400
+  _globals['_RELEASELOCKRESPONSE']._serialized_start=402
+  _globals['_RELEASELOCKRESPONSE']._serialized_end=440
+  _globals['_FILESERVER']._serialized_start=443
+  _globals['_FILESERVER']._serialized_end=725
 # @@protoc_insertion_point(module_scope)

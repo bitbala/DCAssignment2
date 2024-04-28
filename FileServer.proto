@@ -4,6 +4,8 @@ service FileServer {
     rpc DownloadFile(DownloadFileRequest) returns (DownloadFileResponse) {}
 	rpc SaveFile(SaveFileRequest) returns (SaveFileResponse) {}
     rpc ListFiles(ListFilesRequest) returns (ListFilesResponse) {}
+    rpc GetLock(LockRequest) returns (LockResponse) {}
+    rpc ReleaseLock(ReleaseLockRequest) returns (ReleaseLockResponse) {}
 }
 
 message DownloadFileRequest {
@@ -32,4 +34,18 @@ message ListFilesRequest {
 message ListFilesResponse {
     bool success = 1;
     repeated string fileName = 2;
+}
+
+message LockRequest {
+}
+
+message LockResponse {
+    bool success = 1;
+}
+
+message ReleaseLockRequest {
+}
+
+message ReleaseLockResponse {
+    bool success = 1;
 }

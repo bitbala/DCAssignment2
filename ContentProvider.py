@@ -1,3 +1,4 @@
+from concurrent import futures
 from datetime import datetime
 import threading
 import time
@@ -105,6 +106,54 @@ def send_to_file_server(file_name):
     else:
         logging.warn("No file server configured")
 
+def get_lock_to_file_server():
+    # Fetching the fileserver IP
+    file_server_ip = content_provider_configs["server_ip"]
+    file_server_port = content_provider_configs["server_port"]
+
+    # Fetching the file server address to send
+    file_server_address = f'{file_server_ip}:{file_server_port}'
+
+    if file_server_address:
+        # Invoking the FileServer's Save File rpc method
+        try:
+            while True:
+                with grpc.insecure_channel(file_server_address) as channel:
+                    stub = FileServer_pb2_grpc.FileServerStub(channel)
+                    request = FileServer_pb2.LockRequest()
+                    response = stub.GetLock(request)
+                    if (response.success):
+                        return response.success
+                    else:
+                        logging.info("Waiting for lock")
+                        time.sleep(10)
+        except grpc.RpcError as e:
+            if e.code() == grpc.StatusCode.UNAVAILABLE:
+                logging.error(f"File Server {file_server_address} is not running")
+
+def release_lock_of_file_server():
+    # Fetching the fileserver IP
+    file_server_ip = content_provider_configs["server_ip"]
+    file_server_port = content_provider_configs["server_port"]
+
+    # Fetching the file server address to send
+    file_server_address = f'{file_server_ip}:{file_server_port}'
+
+    if file_server_address:
+        # Invoking the FileServer's Save File rpc method
+        try:
+            with grpc.insecure_channel(file_server_address) as channel:
+                stub = FileServer_pb2_grpc.FileServerStub(channel)
+                request = FileServer_pb2.ReleaseLockRequest()
+                response = stub.ReleaseLock(request)
+                if (response.success):
+                    return response.success
+                else:
+                    logging.info("Unable to release lock")
+        except grpc.RpcError as e:
+            if e.code() == grpc.StatusCode.UNAVAILABLE:
+                logging.error(f"File Server {file_server_address} is not running")
+
 
 def content_generation_job():
     """
@@ -131,11 +180,22 @@ def content_generation_job():
         
         logging.info(f"New file {generated_file_name} generated")
         try:
-            response = send_to_file_server(generated_file_name)
-            if (response.success):
-                logging.info(f"Message from Server: {response.message}")
+            # Get lock to the server to enter Critical section
+            lock_response = get_lock_to_file_server()
+            if (lock_response):
+                logging.info("Got Lock")
+                # Critical Section
+                response = send_to_file_server(generated_file_name)
+                if (response.success):
+                    logging.info(f"Message from Server: {response.message}")
+                else:
+                    logging.error(f"Message from Server: {response.message}")
+                time.sleep(30)
             else:
-                logging.error(f"Message from Server: {response.message}")
+                logging.info("Unable to get lock")
+            release_lock_response = release_lock_of_file_server()
+            if (release_lock_response):
+                logging.info("Released lock")
         except Exception as e:
             logging.error(f"Error: {e}")
 
@@ -143,7 +203,6 @@ def content_generation_job():
         interval = content_provider_configs["interval"]
 
         time.sleep(interval)
-
 
 if __name__ == "__main__":
     
