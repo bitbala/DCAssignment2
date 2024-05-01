@@ -20,7 +20,7 @@ def send_download_file_request(file_server_address, file_name):
     try:
         with grpc.insecure_channel(file_server_address) as channel:
             stub = FileServer_pb2_grpc.FileServerStub(channel)
-            request = FileServer_pb2.DownloadFileRequest(file_name=file_name, request_forward_count = 1)
+            request = FileServer_pb2.DownloadFileRequest(file_name=file_name)
             response = stub.DownloadFile(request)
             if response.success:
                 with open(file_name, 'wb') as f:
