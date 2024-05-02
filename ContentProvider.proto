@@ -2,32 +2,19 @@ syntax = "proto3";
 
 package contentprovider;
 
-// The gRPC service definition for ContentProvider nodes
-service ContentProviderService {
-  // Sends a request to enter the critical section
-  rpc RequestCriticalSection(CriticalSectionRequest) returns (CriticalSectionResponse);
-  // Sends a reply after receiving a critical section request
-  rpc ReceiveReply(ReplyRequest) returns (ReplyResponse);
+service SuzukiKasamiService {
+  rpc RequestToken(Request) returns (Ack) {}
+  rpc ReceiveToken(Token) returns (Ack) {}
 }
 
-// Request to enter the critical section
-message CriticalSectionRequest {
-  int32 node_id = 1; // Unique identifier for the requesting node
-  int64 timestamp = 2; // Timestamp of the request
-}
-
-// Response to a critical section request
-message CriticalSectionResponse {
+message Request {
   int32 node_id = 1;
-  bool granted = 2; // Whether the request is granted
+  int32 request_number = 2;
 }
 
-// Request for sending a reply after receiving a critical section request
-message ReplyRequest {
-  int32 node_id = 1; // Identifier of the node that initially requested
-  bool granted = 2;
+message Token {
+  int32 holder_id = 1;
+  repeated int32 RN = 2;
 }
 
-// Response to a reply request
-message ReplyResponse {
-}
+message Ack {}

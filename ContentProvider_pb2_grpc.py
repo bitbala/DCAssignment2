@@ -5,9 +5,8 @@ import grpc
 import ContentProvider_pb2 as ContentProvider__pb2
 
 
-class ContentProviderServiceStub(object):
-    """The gRPC service definition for ContentProvider nodes
-    """
+class SuzukiKasamiServiceStub(object):
+    """Missing associated documentation comment in .proto file."""
 
     def __init__(self, channel):
         """Constructor.
@@ -15,62 +14,58 @@ class ContentProviderServiceStub(object):
         Args:
             channel: A grpc.Channel.
         """
-        self.RequestCriticalSection = channel.unary_unary(
-                '/contentprovider.ContentProviderService/RequestCriticalSection',
-                request_serializer=ContentProvider__pb2.CriticalSectionRequest.SerializeToString,
-                response_deserializer=ContentProvider__pb2.CriticalSectionResponse.FromString,
+        self.RequestToken = channel.unary_unary(
+                '/contentprovider.SuzukiKasamiService/RequestToken',
+                request_serializer=ContentProvider__pb2.Request.SerializeToString,
+                response_deserializer=ContentProvider__pb2.Ack.FromString,
                 )
-        self.ReceiveReply = channel.unary_unary(
-                '/contentprovider.ContentProviderService/ReceiveReply',
-                request_serializer=ContentProvider__pb2.ReplyRequest.SerializeToString,
-                response_deserializer=ContentProvider__pb2.ReplyResponse.FromString,
+        self.ReceiveToken = channel.unary_unary(
+                '/contentprovider.SuzukiKasamiService/ReceiveToken',
+                request_serializer=ContentProvider__pb2.Token.SerializeToString,
+                response_deserializer=ContentProvider__pb2.Ack.FromString,
                 )
 
 
-class ContentProviderServiceServicer(object):
-    """The gRPC service definition for ContentProvider nodes
-    """
+class SuzukiKasamiServiceServicer(object):
+    """Missing associated documentation comment in .proto file."""
 
-    def RequestCriticalSection(self, request, context):
-        """Sends a request to enter the critical section
-        """
+    def RequestToken(self, request, context):
+        """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def ReceiveReply(self, request, context):
-        """Sends a reply after receiving a critical section request
-        """
+    def ReceiveToken(self, request, context):
+        """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
 
-def add_ContentProviderServiceServicer_to_server(servicer, server):
+def add_SuzukiKasamiServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
-            'RequestCriticalSection': grpc.unary_unary_rpc_method_handler(
-                    servicer.RequestCriticalSection,
-                    request_deserializer=ContentProvider__pb2.CriticalSectionRequest.FromString,
-                    response_serializer=ContentProvider__pb2.CriticalSectionResponse.SerializeToString,
+            'RequestToken': grpc.unary_unary_rpc_method_handler(
+                    servicer.RequestToken,
+                    request_deserializer=ContentProvider__pb2.Request.FromString,
+                    response_serializer=ContentProvider__pb2.Ack.SerializeToString,
             ),
-            'ReceiveReply': grpc.unary_unary_rpc_method_handler(
-                    servicer.ReceiveReply,
-                    request_deserializer=ContentProvider__pb2.ReplyRequest.FromString,
-                    response_serializer=ContentProvider__pb2.ReplyResponse.SerializeToString,
+            'ReceiveToken': grpc.unary_unary_rpc_method_handler(
+                    servicer.ReceiveToken,
+                    request_deserializer=ContentProvider__pb2.Token.FromString,
+                    response_serializer=ContentProvider__pb2.Ack.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'contentprovider.ContentProviderService', rpc_method_handlers)
+            'contentprovider.SuzukiKasamiService', rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
 
 
  # This class is part of an EXPERIMENTAL API.
-class ContentProviderService(object):
-    """The gRPC service definition for ContentProvider nodes
-    """
+class SuzukiKasamiService(object):
+    """Missing associated documentation comment in .proto file."""
 
     @staticmethod
-    def RequestCriticalSection(request,
+    def RequestToken(request,
             target,
             options=(),
             channel_credentials=None,
@@ -80,14 +75,14 @@ class ContentProviderService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/contentprovider.ContentProviderService/RequestCriticalSection',
-            ContentProvider__pb2.CriticalSectionRequest.SerializeToString,
-            ContentProvider__pb2.CriticalSectionResponse.FromString,
+        return grpc.experimental.unary_unary(request, target, '/contentprovider.SuzukiKasamiService/RequestToken',
+            ContentProvider__pb2.Request.SerializeToString,
+            ContentProvider__pb2.Ack.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
     @staticmethod
-    def ReceiveReply(request,
+    def ReceiveToken(request,
             target,
             options=(),
             channel_credentials=None,
@@ -97,8 +92,8 @@ class ContentProviderService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/contentprovider.ContentProviderService/ReceiveReply',
-            ContentProvider__pb2.ReplyRequest.SerializeToString,
-            ContentProvider__pb2.ReplyResponse.FromString,
+        return grpc.experimental.unary_unary(request, target, '/contentprovider.SuzukiKasamiService/ReceiveToken',
+            ContentProvider__pb2.Token.SerializeToString,
+            ContentProvider__pb2.Ack.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

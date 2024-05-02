@@ -14,6 +14,15 @@ def getInt(config_file, section, config_key):
 
     return config_value
 
+def build_dictionary(config_file, section):
+    config = configparser.ConfigParser()
+    config.read(config_file)
+
+    node_dict = {}
+    if section in config:
+        for key, value in config['nodes'].items():
+            node_dict[int(key)] = value
+    return node_dict
 
 def getall (config_file, section):
     config = configparser.ConfigParser()
