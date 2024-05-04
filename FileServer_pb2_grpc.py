@@ -29,16 +29,6 @@ class FileServerStub(object):
                 request_serializer=FileServer__pb2.ListFilesRequest.SerializeToString,
                 response_deserializer=FileServer__pb2.ListFilesResponse.FromString,
                 )
-        self.GetLock = channel.unary_unary(
-                '/FileServer/GetLock',
-                request_serializer=FileServer__pb2.LockRequest.SerializeToString,
-                response_deserializer=FileServer__pb2.LockResponse.FromString,
-                )
-        self.ReleaseLock = channel.unary_unary(
-                '/FileServer/ReleaseLock',
-                request_serializer=FileServer__pb2.ReleaseLockRequest.SerializeToString,
-                response_deserializer=FileServer__pb2.ReleaseLockResponse.FromString,
-                )
 
 
 class FileServerServicer(object):
@@ -62,18 +52,6 @@ class FileServerServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def GetLock(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def ReleaseLock(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
 
 def add_FileServerServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -91,16 +69,6 @@ def add_FileServerServicer_to_server(servicer, server):
                     servicer.ListFiles,
                     request_deserializer=FileServer__pb2.ListFilesRequest.FromString,
                     response_serializer=FileServer__pb2.ListFilesResponse.SerializeToString,
-            ),
-            'GetLock': grpc.unary_unary_rpc_method_handler(
-                    servicer.GetLock,
-                    request_deserializer=FileServer__pb2.LockRequest.FromString,
-                    response_serializer=FileServer__pb2.LockResponse.SerializeToString,
-            ),
-            'ReleaseLock': grpc.unary_unary_rpc_method_handler(
-                    servicer.ReleaseLock,
-                    request_deserializer=FileServer__pb2.ReleaseLockRequest.FromString,
-                    response_serializer=FileServer__pb2.ReleaseLockResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -160,39 +128,5 @@ class FileServer(object):
         return grpc.experimental.unary_unary(request, target, '/FileServer/ListFiles',
             FileServer__pb2.ListFilesRequest.SerializeToString,
             FileServer__pb2.ListFilesResponse.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
-
-    @staticmethod
-    def GetLock(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/FileServer/GetLock',
-            FileServer__pb2.LockRequest.SerializeToString,
-            FileServer__pb2.LockResponse.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
-
-    @staticmethod
-    def ReleaseLock(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/FileServer/ReleaseLock',
-            FileServer__pb2.ReleaseLockRequest.SerializeToString,
-            FileServer__pb2.ReleaseLockResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

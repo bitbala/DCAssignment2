@@ -140,6 +140,7 @@ class ContentProvider(ContentProvider_pb2_grpc.SuzukiKasamiServiceServicer):
     def has_token(self):
         return self.token is not None and self.token.holder_id == self.node_id
     
+
     """
     Entering Critical section based on token and eligibility to enter
     """
@@ -147,16 +148,27 @@ class ContentProvider(ContentProvider_pb2_grpc.SuzukiKasamiServiceServicer):
         if self.need_token and self.has_token():
             self.is_in_critical_section = True
             self.need_token = False
-            response = self.send_to_file_server(self.generated_file_name)
-            if (response.success):
-                logging.info(f"{Fore.CYAN}File Saved successfully into File Server {Style.RESET_ALL}")
-            else:
-                logging.error(f"{Fore.RED}Failed to Save to file to File Server{Style.RESET_ALL}")
-            logging.info("Sleeping for 15 seconds for explicit locking")
-            time.sleep(15)
+            try:
+                response = self.send_to_file_server(self.generated_file_name)
+                if response.success:
+                    logging.info(f"{Fore.CYAN}File saved successfully into File Server{Style.RESET_ALL}")
+                else:
+                    logging.error(f"{Fore.RED}Failed to save file to File Server{Style.RESET_ALL}")
+            except Exception as e:
+                logging.error(f"Error occurred while sending file to server: {e}")
+            finally:
+                logging.info("Sleeping for 5 seconds for explicit blocking")
+                time.sleep(5)
         else:
-            logging.info(f"{Fore.LIGHTRED_EX}Requesting for token to enter Critical Section{Fore.RESET}....")
             self.send_token_request()
+    """
+    Handling Critical section after receiving the token
+    """
+    def handle_critical_section(self):
+        self.enter_critical_section()
+        if(self.is_in_critical_section):
+            self.leave_critical_section()
+        sys.exit()
 
     """
     Method to Send to Token request to all running server
@@ -170,6 +182,7 @@ class ContentProvider(ContentProvider_pb2_grpc.SuzukiKasamiServiceServicer):
             if (node_id != self.node_id):
                 request = ContentProvider_pb2.Request(node_id=self.node_id, request_number=self.RN[self.node_id])
                 try:
+                    logging.info(f"{Fore.LIGHTRED_EX}Requesting token from {node_id} to enter Critical Section{Fore.RESET}....")
                     with grpc.insecure_channel(address) as channel:
                         stub = ContentProvider_pb2_grpc.SuzukiKasamiServiceStub(channel)
                         response = stub.RequestToken(request)
@@ -184,20 +197,25 @@ class ContentProvider(ContentProvider_pb2_grpc.SuzukiKasamiServiceServicer):
         logging.info(f"{Fore.GREEN}Leaving Critical section{Fore.RESET}")
         self.token.RN[self.node_id] = self.RN[self.node_id]
         self.pass_token_to_next_node()
+        return None
 
     """
     Method to find if there are any next nodes requesting for tokens.
     If not keep the token with the server
     """
     def pass_token_to_next_node(self):
+        token_passed = False
         for i in range(1, self.total_nodes):
             next_node_id = (self.node_id + i) % self.total_nodes
             if self.has_token() and self.RN[next_node_id] == self.token.RN[next_node_id] + 1:
-                logging.info (f"{Fore.MAGENTA}Found Node {i} requesting for token{Style.RESET_ALL}")
+                logging.info (f"{Fore.MAGENTA}Found Node {next_node_id} requesting for token{Style.RESET_ALL}")
                 self.pass_token_to(next_node_id)
                 time.sleep(2)
+                token_passed = True
                 break
-            logging.info("Found no node requesting for token. Hence not passing the token anywhere")            
+        if (not token_passed):
+            logging.info("Found no node requesting for token. Hence not passing the token anywhere")
+        return None          
 
     """
     Method to pass the token to give node
@@ -211,12 +229,13 @@ class ContentProvider(ContentProvider_pb2_grpc.SuzukiKasamiServiceServicer):
                 stub = ContentProvider_pb2_grpc.SuzukiKasamiServiceStub(channel)
                 logging.info(f"{Fore.MAGENTA}Request came for token from {node_id} and hence passing{Style.RESET_ALL}")
                 self.token.holder_id = node_id
+                self.need_token = True
                 response = stub.ReceiveToken(request)
                 if response:
                     logging.info(f"{Fore.MAGENTA}Token Passed to {node_id} Successfully {Style.RESET_ALL}")
                 else:
                     self.token.holder_id = self.node_id
-
+                    self.need_token = False
     """
     RPC Method handle RequestToken requests
     """
@@ -236,7 +255,7 @@ class ContentProvider(ContentProvider_pb2_grpc.SuzukiKasamiServiceServicer):
         if (self.can_enter_critical_section(self.node_id)):
             logging.info(f"{Fore.GREEN}Entering Critical Section{Fore.RESET}")
             # Starting new thread to enter critical section
-            thread = threading.Thread(target=self.enter_critical_section)
+            thread = threading.Thread(target=self.handle_critical_section)
             thread.start()
         else:
             logging.error("Recevied token but condition not met")
