@@ -4,7 +4,7 @@ import sys
 import threading
 import time
 import logging
-
+from threading import Lock
 from colorama import Fore, Style
 from utils import ConfigReader
 import os
@@ -37,6 +37,7 @@ class ContentProvider(ContentProvider_pb2_grpc.SuzukiKasamiServiceServicer):
         self.token = None if node_id != 0 else ContentProvider_pb2.Token(holder_id=0, RN=[0]*self.total_nodes)
         self.need_token = False if node_id != 0 else True
         self.is_in_critical_section = False
+        self.token_lock = Lock()
 
     def generate_random_string(self, length):
         letters = string.ascii_letters + string.digits
@@ -69,21 +70,6 @@ class ContentProvider(ContentProvider_pb2_grpc.SuzukiKasamiServiceServicer):
         success = self.save_file(generated_files_directory,  file_name, file_content)
 
         return file_name
-
-    def save_file(self, directory, file_name, file_content):
-
-        # Create the folders if it is not existing
-        if not os.path.exists(directory):
-            os.makedirs(directory)
-            logging.info(f"Directory '{directory}' created.")
-
-        save_file_path = os.path.join (directory, file_name)
-
-        with open(save_file_path, "w") as f:
-            f.write(file_content)
-        
-        return True
-
 
     def send_to_file_server(self, file_name):
         """
@@ -126,23 +112,56 @@ class ContentProvider(ContentProvider_pb2_grpc.SuzukiKasamiServiceServicer):
         else:
             logging.warn("No file server configured")
 
+    def save_file(self, directory, file_name, file_content):
+
+        # Create the folders if it is not existing
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+            logging.info(f"Directory '{directory}' created.")
+
+        save_file_path = os.path.join (directory, file_name)
+
+        with open(save_file_path, "w") as f:
+            f.write(file_content)
+        
+        return True
+
+    # Suzuki Kasami Algorith implementation
+
+    """
+    Method to determine if the node can enter the Critical Section
+    """
+    def can_enter_critical_section(self, node_id):
+        return self.RN[node_id] == self.token.RN[node_id]
+    
+    """
+    Method to validate if the server has the token or not
+    """
+    def has_token(self):
+        return self.token is not None and self.token.holder_id == self.node_id
+    
+    """
+    Entering Critical section based on token and eligibility to enter
+    """
     def enter_critical_section(self):
         if self.need_token and self.has_token():
             self.is_in_critical_section = True
             self.need_token = False
             response = self.send_to_file_server(self.generated_file_name)
             if (response.success):
-                logging.info(f"Message from Server: {response.message}")
+                logging.info(f"{Fore.CYAN}File Saved successfully into File Server {Style.RESET_ALL}")
             else:
-                logging.error(f"Message from Server: {response.message}")
+                logging.error(f"{Fore.RED}Failed to Save to file to File Server{Style.RESET_ALL}")
             logging.info("Sleeping for 15 seconds for explicit locking")
             time.sleep(15)
         else:
-            logging.info("Not having token... Requesting for token....")
+            logging.info(f"{Fore.LIGHTRED_EX}Requesting for token to enter Critical Section{Fore.RESET}....")
             self.send_token_request()
 
+    """
+    Method to Send to Token request to all running server
+    """
     def send_token_request(self):
-        logging.info(self.RN)
         self.RN[self.node_id] = self.RN[self.node_id] + 1
         self.need_token = True
 
@@ -154,79 +173,100 @@ class ContentProvider(ContentProvider_pb2_grpc.SuzukiKasamiServiceServicer):
                     with grpc.insecure_channel(address) as channel:
                         stub = ContentProvider_pb2_grpc.SuzukiKasamiServiceStub(channel)
                         response = stub.RequestToken(request)
-                        print (f"Response: {response}")
                 except:
-                    print (f"Exception in sending token request to {node_id}")
+                    logging.warning(f"Seems Server is not running in {node_id} and hence error in sending token request to {node_id}")
 
-    def RequestToken(self, request, context):
-        self.RN[request.node_id] = max(request.request_number, self.RN[request.node_id]) 
-        if (self.token and self.token.holder_id == self.node_id and self.RN[request.node_id] == self.token.RN[request.node_id] + 1 and not self.is_in_critical_section):
-            self.pass_token_to(request.node_id)
-        return ContentProvider_pb2.Ack()
-
-    def pass_token_to(self, node_id):
-        node_address = self.node_addresses[node_id]
-        request = ContentProvider_pb2.Token(holder_id=node_id, RN=self.RN)
-        with grpc.insecure_channel(node_address) as channel:
-            stub = ContentProvider_pb2_grpc.SuzukiKasamiServiceStub(channel)
-            response = stub.ReceiveToken(request)
-            self.token.holder_id = node_id
-
-    def can_enter_critical_section(self, node_id):
-        return self.RN[node_id] == self.token.RN[node_id]
-
-    def ReceiveToken(self, request, context):
-        self.token = request
-        if (self.can_enter_critical_section(self.node_id)):
-            logging.info("Entering Critical Section")
-            self.enter_critical_section()
-        else:
-            logging.error("Recevied token but condition not met")
-        return ContentProvider_pb2.Ack()
-
-    def has_token(self):
-        logging.info(f"Has token returns:{self.token is not None and self.token.holder_id == self.node_id}")
-        return self.token is not None and self.token.holder_id == self.node_id
-    
+    """
+    Method to Leave critical section and pass the token to Next node
+    """
     def leave_critical_section(self):
         self.is_in_critical_section = False
-        logging.info("Leaving Critical section")
+        logging.info(f"{Fore.GREEN}Leaving Critical section{Fore.RESET}")
         self.token.RN[self.node_id] = self.RN[self.node_id]
         self.pass_token_to_next_node()
 
+    """
+    Method to find if there are any next nodes requesting for tokens.
+    If not keep the token with the server
+    """
     def pass_token_to_next_node(self):
         for i in range(1, self.total_nodes):
             next_node_id = (self.node_id + i) % self.total_nodes
-            if self.RN[next_node_id] == self.token.RN[next_node_id] + 1:
-                print ("Found a node requesting for token")
+            if self.has_token() and self.RN[next_node_id] == self.token.RN[next_node_id] + 1:
+                logging.info (f"{Fore.MAGENTA}Found Node {i} requesting for token{Style.RESET_ALL}")
                 self.pass_token_to(next_node_id)
+                time.sleep(2)
                 break
-            print ("Found no node requesting for token")
+            logging.info("Found no node requesting for token. Hence not passing the token anywhere")            
+
+    """
+    Method to pass the token to give node
+    using ReceiveToken RPC method
+    """
+    def pass_token_to(self, node_id):
+        with self.token_lock:
+            node_address = self.node_addresses[node_id]
+            request = ContentProvider_pb2.Token(holder_id=node_id, RN=self.RN)
+            with grpc.insecure_channel(node_address) as channel:
+                stub = ContentProvider_pb2_grpc.SuzukiKasamiServiceStub(channel)
+                logging.info(f"{Fore.MAGENTA}Request came for token from {node_id} and hence passing{Style.RESET_ALL}")
+                self.token.holder_id = node_id
+                response = stub.ReceiveToken(request)
+                if response:
+                    logging.info(f"{Fore.MAGENTA}Token Passed to {node_id} Successfully {Style.RESET_ALL}")
+                else:
+                    self.token.holder_id = self.node_id
+
+    """
+    RPC Method handle RequestToken requests
+    """
+    def RequestToken(self, request, context):
+        self.RN[request.node_id] = max(request.request_number, self.RN[request.node_id]) 
+        if (self.token and self.has_token() and self.RN[request.node_id] == self.token.RN[request.node_id] + 1 and not self.is_in_critical_section):
+            self.pass_token_to(request.node_id)
+            self.token.holder_id = request.node_id
+        return ContentProvider_pb2.Ack()
+
+    """
+    RPC Method to handle receive tokens
+    """
+    def ReceiveToken(self, request, context):
+        self.token = request
+        logging.info(f"{Fore.LIGHTRED_EX}Received token from other server {Fore.RESET}")
+        if (self.can_enter_critical_section(self.node_id)):
+            logging.info(f"{Fore.GREEN}Entering Critical Section{Fore.RESET}")
+            # Starting new thread to enter critical section
+            thread = threading.Thread(target=self.enter_critical_section)
+            thread.start()
+        else:
+            logging.error("Recevied token but condition not met")
+        return ContentProvider_pb2.Ack()
+    
+    """
+    Content Generation Job to generate random/identical files periodically
+    """
 
     def content_generation_job(self):
         """
         Content Generation job that generates a random text string file for every x seconds
         """
-        logging.info(f"Content generator \033[1m\033[32m***{content_provider_configs['name']}***\033[39m\033[0m starting....")
+        logging.info(f"Content generator {Fore.GREEN}{Style.BRIGHT}***{content_provider_configs['name']}***\033[39m\033[0m starting....")
         while True:
-            logging.info ("Generating New file....")
-
             choices = ["unique", "identical"]
             unique_or_identical= random.choice(choices)
             
             self.generated_file_name = None
 
             if (unique_or_identical == "identical"):
-                logging.info(f"Generating Fixed contents file")
                 self.generated_file_name = self.generate_fixed_file()
+                logging.info(f"Generated New Identical file {self.generated_file_name}")
 
             else:
                 # Parameters to generate the text file
                 file_size = content_provider_configs["file_size"]        
-                logging.info(f"Generating unique contents file of size:{file_size}")
                 self.generated_file_name = self.generate_random_file(file_size)
+                logging.info(f"Generated New Unique file {self.generated_file_name} of {file_size}")
             
-            logging.info(f"New file {self.generated_file_name} generated")
             try:
                 # Enter Critical Section
                 self.need_token = True
@@ -238,20 +278,25 @@ class ContentProvider(ContentProvider_pb2_grpc.SuzukiKasamiServiceServicer):
 
             # Generating the text file
             interval = content_provider_configs["interval"]
-
+            logging.info(f"{Fore.YELLOW}Sleeping for {interval} before next file generation job{Style.RESET_ALL}")
             time.sleep(interval)
 
+    """
+    Method to start the DME Server and content generation job
+    """
     def start_dme_server(self):
+
+        # Starting DME Server that handles Suzuki-Kasamai Algorithm
         dme_server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
         ContentProvider_pb2_grpc.add_SuzukiKasamiServiceServicer_to_server(self, dme_server)
         dme_server.add_insecure_port(f'[::]:{content_provider_configs["dme_server_port"]}')
         dme_server.start()
-        logging.info(f"{Fore.GREEN} DME Server started on port {content_provider_configs['dme_server_port']}{Style.RESET_ALL}")
+        logging.info(f"{Fore.GREEN}DME Server started on port {content_provider_configs['dme_server_port']}{Style.RESET_ALL}")
         
-        self.content_generation_job()
-        #content_thread = threading.Thread(target=self.content_generation_job())
-        #content_thread.daemon = True
-        #content_thread.start()
+        # starting separate thread for Content Generation
+        content_thread = threading.Thread(target=self.content_generation_job())
+        content_thread.daemon = True
+        content_thread.start()
 
         try:
             dme_server.wait_for_termination()
@@ -260,6 +305,9 @@ class ContentProvider(ContentProvider_pb2_grpc.SuzukiKasamiServiceServicer):
             dme_server.stop(0)
             logging.info("Server stopped")
 
+"""
+Main Method
+"""
 if __name__ == "__main__":
 
     directories = ["logs", "files_repository", "generated_files"]
@@ -278,11 +326,12 @@ if __name__ == "__main__":
     other_content_providers = ConfigReader.build_dictionary(content_provider_config_file, "nodes")
     content_provider = ContentProvider(content_provider_configs["node_id"], other_content_providers)
 
-
+    # Starting a new DME Server thread
     dme_server_thread = threading.Thread(target=content_provider.start_dme_server)
     dme_server_thread.daemon = True
     dme_server_thread.start()
-    # While loop to make the job running
+
+    # While loop to make the job running in main thread
     try:
         while True:
             time.sleep(3600)

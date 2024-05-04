@@ -10,6 +10,10 @@ import FileServer_pb2_grpc
 from utils import HashUtils
 from utils import ConfigReader
 import json
+from colorama import Fore
+from colorama import Style
+
+os.makedirs('logs', exist_ok=True)
 
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s [%(levelname)s] %(message)s',
@@ -30,7 +34,6 @@ class FileServer(FileServer_pb2_grpc.FileServerServicer):
     Method to initalize the configs
     """
     def initialize_configs(self):
-        logging.info(f"calling initialize_Configs:{self}")
         self.file_server_config_file = os.path.join("config","file_server.conf")
         self.file_server_configs = ConfigReader.fetch_all_configs(self.file_server_config_file)
         self.lock = False
@@ -77,12 +80,13 @@ class FileServer(FileServer_pb2_grpc.FileServerServicer):
                 HashUtils.update_file_hash_table(self.file_hash_table, request.file_name, 
                                                  file_hash, request.file_name)
                 response_message = f"Received data from client and saved to file: {content_path}"
+                success = True
                 logging.info(f"File received from {context.peer()} and saved the file under {content_path}")
             except IOError as e:
                 logging.error(f"Error writing file {content_path}: {e}")
                 return FileServer_pb2.SaveFileResponse(success=False, message="File writing error.")
         logging.info(json.dumps(self.file_hash_table, indent=4))
-        return FileServer_pb2.SaveFileResponse(success=True, message=response_message)
+        return FileServer_pb2.SaveFileResponse(success=success, message=response_message)
     
 
     """
@@ -94,7 +98,7 @@ class FileServer(FileServer_pb2_grpc.FileServerServicer):
         if not request.file_name:
             return FileServer_pb2.DownloadFileResponse(success=False, message="Invalid file name")
      
-        logging.info(f"Download requested received....{request.file_name}")
+        logging.info(f"Download requested received for {request.file_name}")
         file_content = None
 
         try:
@@ -145,30 +149,10 @@ class FileServer(FileServer_pb2_grpc.FileServerServicer):
     RPC method to send the list of files that server has
     """
     def ListFiles(self, request, context):
-        # Fetching the local directory to save the incoming files
-        local_directory = self.file_server_configs["files_dir"]
-        fileName = None
-        
+        # Fetching the file names from File Hash Table
         files_list = self.file_hash_table.keys()
 
         return FileServer_pb2.ListFilesResponse(success=True, fileName=files_list)
-    
-    """
-    RPC method to get lock
-    """
-    def GetLock(self, request, context):
-        if (self.lock):
-            return FileServer_pb2.LockResponse(success=False)
-        else:
-            self.lock = True
-            return FileServer_pb2.LockResponse(success=True)
-
-    def ReleaseLock(self, request, context):
-        if (self.lock):
-            self.lock = False
-            return FileServer_pb2.LockResponse(success=True)
-        else:
-            return FileServer_pb2.LockResponse(success=False)
 
     def serve(self):
         #Get the port number to run the Fileserver that listens to incoming requests
@@ -180,7 +164,7 @@ class FileServer(FileServer_pb2_grpc.FileServerServicer):
         file_server.add_insecure_port(file_server_address)
         file_server.start()
 
-        logging.info(f"Server \033[1m\033[32m***{name}***\033[39m\033[0m started. Listening on port: {port}...")
+        logging.info(f"Server {Fore.GREEN}{Style.BRIGHT}***{name}***{Style.RESET_ALL} started. Listening on port: {port}...")
         try:
             file_server.wait_for_termination()
         except KeyboardInterrupt:

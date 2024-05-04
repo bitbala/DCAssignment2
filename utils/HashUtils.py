@@ -2,6 +2,8 @@ import hashlib
 import logging
 import os
 
+os.makedirs('logs', exist_ok=True)
+
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s [%(levelname)s] %(message)s',
                     handlers=[
@@ -25,7 +27,6 @@ def generate_file_hash_table(directory):
                     content = file.read()
                     hash = generate_hash(content)
                     file_with_same_hash = find_files_with_hash(file_hash_table, hash)
-                    logging.info(file_with_same_hash)
                     if file_with_same_hash == None:
                         update_file_hash_table(file_hash_table, filename, hash, filename)
                     else:
@@ -33,6 +34,8 @@ def generate_file_hash_table(directory):
                                                hash, file_with_same_hash)
     except PermissionError:
         logging.error(f"Permission denied to read files under {directory}")
+    except FileNotFoundError:
+        logging.warn(f"Directory: {directory} does not exists")
 
     return file_hash_table
 
