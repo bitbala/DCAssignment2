@@ -26,6 +26,11 @@ share/python-wheels/
 *.egg
 MANIFEST
 
+#My project files
+files_repository/
+generated_files/
+CDN*.txt
+
 # PyInstaller
 #  Usually these files are written by a python script from a template
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.
