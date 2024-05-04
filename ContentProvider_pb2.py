@@ -14,7 +14,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x15\x43ontentProvider.proto\x12\x0f\x63ontentprovider\"2\n\x07Request\x12\x0f\n\x07node_id\x18\x01 \x01(\x05\x12\x16\n\x0erequest_number\x18\x02 \x01(\x05\"&\n\x05Token\x12\x11\n\tholder_id\x18\x01 \x01(\x05\x12\n\n\x02RN\x18\x02 \x03(\x05\"\x05\n\x03\x41\x63k2\x97\x01\n\x13SuzukiKasamiService\x12@\n\x0cRequestToken\x12\x18.contentprovider.Request\x1a\x14.contentprovider.Ack\"\x00\x12>\n\x0cReceiveToken\x12\x16.contentprovider.Token\x1a\x14.contentprovider.Ack\"\x00\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x15\x43ontentProvider.proto\x12\x0f\x63ontentprovider\"2\n\x07Request\x12\x0f\n\x07node_id\x18\x01 \x01(\x05\x12\x16\n\x0erequest_number\x18\x02 \x01(\x05\"5\n\x05Token\x12\x11\n\tholder_id\x18\x01 \x01(\x05\x12\n\n\x02LN\x18\x02 \x03(\x05\x12\r\n\x05queue\x18\x03 \x03(\x05\"\x05\n\x03\x41\x63k2\x97\x01\n\x13SuzukiKasamiService\x12@\n\x0cRequestToken\x12\x18.contentprovider.Request\x1a\x14.contentprovider.Ack\"\x00\x12>\n\x0cReceiveToken\x12\x16.contentprovider.Token\x1a\x14.contentprovider.Ack\"\x00\x62\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -24,9 +24,9 @@ if _descriptor._USE_C_DESCRIPTORS == False:
   _globals['_REQUEST']._serialized_start=42
   _globals['_REQUEST']._serialized_end=92
   _globals['_TOKEN']._serialized_start=94
-  _globals['_TOKEN']._serialized_end=132
-  _globals['_ACK']._serialized_start=134
-  _globals['_ACK']._serialized_end=139
-  _globals['_SUZUKIKASAMISERVICE']._serialized_start=142
-  _globals['_SUZUKIKASAMISERVICE']._serialized_end=293
+  _globals['_TOKEN']._serialized_end=147
+  _globals['_ACK']._serialized_start=149
+  _globals['_ACK']._serialized_end=154
+  _globals['_SUZUKIKASAMISERVICE']._serialized_start=157
+  _globals['_SUZUKIKASAMISERVICE']._serialized_end=308
 # @@protoc_insertion_point(module_scope)

@@ -14,7 +14,8 @@ message Request {
 
 message Token {
   int32 holder_id = 1;
-  repeated int32 RN = 2;
+  repeated int32 LN = 2;
+  repeated int32 queue = 3;
 }
 
 message Ack {}
