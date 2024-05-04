@@ -168,7 +168,6 @@ class ContentProvider(ContentProvider_pb2_grpc.SuzukiKasamiServiceServicer):
         self.enter_critical_section()
         if(self.is_in_critical_section):
             self.leave_critical_section()
-        sys.exit()
 
     """
     Method to Send to Token request to all running server
@@ -255,8 +254,7 @@ class ContentProvider(ContentProvider_pb2_grpc.SuzukiKasamiServiceServicer):
         if (self.can_enter_critical_section(self.node_id)):
             logging.info(f"{Fore.GREEN}Entering Critical Section{Fore.RESET}")
             # Starting new thread to enter critical section
-            thread = threading.Thread(target=self.handle_critical_section)
-            thread.start()
+            self.handle_critical_section()
         else:
             logging.error("Recevied token but condition not met")
         return ContentProvider_pb2.Ack()
@@ -312,11 +310,6 @@ class ContentProvider(ContentProvider_pb2_grpc.SuzukiKasamiServiceServicer):
         dme_server.start()
         logging.info(f"{Fore.GREEN}DME Server started on port {content_provider_configs['dme_server_port']}{Style.RESET_ALL}")
         
-        # starting separate thread for Content Generation
-        content_thread = threading.Thread(target=self.content_generation_job())
-        content_thread.daemon = True
-        content_thread.start()
-
         try:
             dme_server.wait_for_termination()
             # Starting a new thread for Content Generation
@@ -349,6 +342,12 @@ if __name__ == "__main__":
     dme_server_thread = threading.Thread(target=content_provider.start_dme_server)
     dme_server_thread.daemon = True
     dme_server_thread.start()
+
+    # starting separate thread for Content Generation
+    content_thread = threading.Thread(target=content_provider.content_generation_job)
+    content_thread.daemon = True
+    content_thread.start()
+
 
     # While loop to make the job running in main thread
     try:
