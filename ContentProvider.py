@@ -226,6 +226,7 @@ class ContentProvider(ContentProvider_pb2_grpc.SuzukiKasamiServiceServicer):
     RPC Method handle RequestToken requests
     """
     def RequestToken(self, request, context):
+        logging.info(f"{Fore.LIGHTYELLOW_EX}Token Request received from{request.node_id}")
         self.RN[request.node_id] = max(request.request_number, self.RN[request.node_id]) 
         if (self.token and self.has_token() and self.RN[request.node_id] == self.token.LN[request.node_id] + 1 and not self.is_in_critical_section):
             self.pass_token_to(request.node_id)
